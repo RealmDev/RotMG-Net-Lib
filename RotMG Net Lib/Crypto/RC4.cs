@@ -1,15 +1,22 @@
-﻿namespace RotMG_Net_Lib.Crypto
+﻿using System;
+using System.Text;
+
+namespace RotMG_Net_Lib.Crypto
 {
     public class RC4
     {
-        private readonly static int STATE_LENGTH = 256;
+        private static readonly int STATE_LENGTH = 256;
 
         private byte[] engineState;
         private int x;
         private int y;
         private byte[] workingKey;
+        
+        public RC4(string key) : this(HexStringToBytes(key))
+        {
+        }
 
-        public RC4(byte[] key)
+        private RC4(byte[] key)
         {
             workingKey = key;
             SetKey(workingKey);
@@ -62,6 +69,23 @@
                 engineState[i2] = tmp;
                 i1 = (i1 + 1) % keyBytes.Length;
             }
+        }
+
+        private static byte[] HexStringToBytes(string key)
+        {
+            if (key.Length % 2 != 0)
+                throw new ArgumentException("Invalid hex string!");
+
+            byte[] bytes = new byte[key.Length / 2];
+            char[] c = key.ToCharArray();
+            for (int i = 0; i < c.Length; i += 2)
+            {
+                StringBuilder sb = new StringBuilder(2).Append(c[i]).Append(c[(i + 1)]);
+                int j = Convert.ToInt32(sb.ToString(), 16);
+                bytes[(i / 2)] = (byte) j;
+            }
+
+            return bytes;
         }
     }
 }

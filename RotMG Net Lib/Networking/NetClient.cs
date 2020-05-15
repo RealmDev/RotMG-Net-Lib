@@ -8,9 +8,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using NLog;
-using NLog.Targets;
-using Starksoft.Aspen.Proxy;
-using Utils.Utils;
 
 namespace RotMG_Net_Lib.Networking
 {
@@ -39,35 +36,18 @@ namespace RotMG_Net_Lib.Networking
 
         public bool OnDisconnectHasBeenCalled;
 
-        static NetClient()
+        public void Connect(Reconnect reconnect)
         {
-            LoggingUtils.SetupLogging();
-        }
-        
-        public void Connect(Reconnect reconnect, string proxyHost = null, int proxyport = 0)
-        {
-            bool useProxy = (proxyHost != null && proxyport != 0);
-
             OnDisconnectHasBeenCalled = false;
 
-            _incomingEncryption = new RC4(Utility.HexStringToBytes(IncomingKey));
-            _outgoingEncryption = new RC4(Utility.HexStringToBytes(OutgoingKey));
+            _incomingEncryption = new RC4(IncomingKey);
+            _outgoingEncryption = new RC4(OutgoingKey);
 
             try
             {
-                if (useProxy)
-                {
-                    Log.Info("Connecting using HTTP proxy client...");
-                    HttpProxyClient proxyClient = new HttpProxyClient(proxyHost, proxyport);
-                    TcpClient client = proxyClient.CreateConnection(reconnect.Host, reconnect.Port);
-                    _socket = client.Client;
-                }
-                else
-                {
-                    Log.Info("Connecting no using proxy!");
-                    _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                    _socket.Connect(new IPEndPoint(IPAddress.Parse(reconnect.Host), reconnect.Port));
-                }
+                Log.Info("Connecting no using proxy!");
+                _socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                _socket.Connect(new IPEndPoint(IPAddress.Parse(reconnect.Host), reconnect.Port));
 
                 _socket.NoDelay = true;
                 _socket.ReceiveTimeout = 5000;
@@ -182,7 +162,7 @@ namespace RotMG_Net_Lib.Networking
                 {
                     return;
                 }
-                
+
                 IncomingPacket packet = IncomingPacket.Create(packetType);
                 if (packet != null)
                 {
@@ -272,7 +252,7 @@ namespace RotMG_Net_Lib.Networking
             }
         }
 
-        protected int GetTimer()
+        public int GetTimer()
         {
             return (int) Environment.TickCount;
         }
